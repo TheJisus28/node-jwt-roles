@@ -1,11 +1,12 @@
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/user.model";
-import { JWT_SECRET } from "../../../config";
+import { UserModel } from "../models/user.model.js";
+import { JWT_SECRET } from "../../../config.js";
 
-const createUser = async (req, res) => {
+const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
+
     if (!username || !email || !password) {
       return res.status(400).json({
         ok: true,
@@ -30,7 +31,7 @@ const createUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    const token = await jwt.sign(
+    const token = jwt.sign(
       {
         email: newUser.email,
         role: newUser.role,
@@ -66,7 +67,8 @@ const login = async (req, res) => {
       });
     }
 
-    const user = UserModel.findOneByEmail(email);
+    const user = await UserModel.findOneByEmail(email);
+
     if (!user) {
       return res.status(401).json({
         ok: true,
@@ -94,7 +96,7 @@ const login = async (req, res) => {
       }
     );
 
-    return res.json({
+    return res.status(200).json({
       ok: true,
       msg: "User Logged",
       body: token,
@@ -107,7 +109,22 @@ const login = async (req, res) => {
   }
 };
 
+const profile = async () => {
+  try {
+    const user = await UserModel.findOneByEmail(req.email);
+
+    return res.json({
+      ok: true,
+      msg: "User data",
+      body: user,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ ok: false, msg: "Error server" });
+  }
+};
 export const userController = {
-  createUser,
+  register,
   login,
+  profile,
 };
